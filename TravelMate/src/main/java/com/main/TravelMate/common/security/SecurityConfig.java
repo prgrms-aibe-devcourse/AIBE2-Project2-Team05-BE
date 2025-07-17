@@ -26,6 +26,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/api/auth/oauth/**").permitAll()  // ✅ 추가
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "GUIDE", "ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -33,6 +34,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
