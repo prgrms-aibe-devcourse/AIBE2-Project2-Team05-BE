@@ -44,18 +44,23 @@
 
 ```
 📦src
- ┣ 📂main
- ┃ ┣ 📂java/com/travelmate
- ┃ ┃ ┣ 📂user         // 회원가입, 로그인, 프로필
- ┃ ┃ ┣ 📂plan         // 여행 일정 등록
- ┃ ┃ ┣ 📂feed         // 여행 피드 게시
- ┃ ┃ ┣ 📂match        // 동행자/가이드 매칭
- ┃ ┃ ┣ 📂chat         // 채팅 (WebSocket)
- ┃ ┃ ┣ 📂review       // 후기 작성
- ┃ ┃ ┣ 📂admin        // 관리자 기능
- ┃ ┃ ┗ 📂common       // 예외 처리, 응답 포맷 등
- ┃ ┗ 📂resources
- ┃   ┗ application.yml
+ ┗ 📂main
+    ┣ 📂java
+    ┃ ┗ 📂com.example.travelmate
+    ┃     ┣ 📂config             # 보안, CORS, Swagger 등 설정 파일
+    ┃     ┣ 📂controller         # 요청을 처리하는 컨트롤러 계층
+    ┃     ┣ 📂domain             # 핵심 도메인(엔티티) 클래스
+    ┃     ┣ 📂dto                # 요청/응답 DTO 클래스
+    ┃     ┣ 📂repository         # DB 접근 (JPA, MyBatis 등)
+    ┃     ┣ 📂service            # 비즈니스 로직 처리 계층
+    ┃     ┣ 📂security           # JWT, 인증 관련 로직
+    ┃     ┗ 📂exception          # 예외 처리, 커스텀 예외
+    ┣ 📂resources
+    ┃ ┣ 📂static                # 정적 리소스 (이미지, JS, CSS 등)
+    ┃ ┣ 📂templates             # Thymeleaf, JSP 등 (사용 시)
+    ┃ ┣ application.yml         # 환경 설정 파일
+    ┃ ┗ schema.sql              # DB 스키마 초기화 (선택)
+
 ```
 
 ---
