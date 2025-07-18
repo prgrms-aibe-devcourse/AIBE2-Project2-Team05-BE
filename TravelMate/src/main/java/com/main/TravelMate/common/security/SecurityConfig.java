@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/feed/**").authenticated()
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/match/**").authenticated()
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "GUIDE", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

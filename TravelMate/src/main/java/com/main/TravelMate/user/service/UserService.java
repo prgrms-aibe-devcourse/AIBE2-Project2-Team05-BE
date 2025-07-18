@@ -11,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -48,4 +49,14 @@ public class UserService {
         String token = jwtTokenProvider.createToken(user.getEmail(), user.getRole());
         return new LoginResponseDto(token, user.getEmail(), user.getRole());
     }
+
+
+    @Transactional
+    public void delete(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자 없음"));
+        userRepository.delete(user);
+    }
+
+
 }
