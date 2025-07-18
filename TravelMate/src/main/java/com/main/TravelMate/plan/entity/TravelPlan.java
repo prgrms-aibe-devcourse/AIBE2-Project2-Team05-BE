@@ -23,6 +23,9 @@ public class TravelPlan {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
+    @Column(nullable = false)
+    private String title;
+
     private String location;
 
     private LocalDate startDate;
@@ -32,6 +35,13 @@ public class TravelPlan {
     private String description;
 
     private String interests;
+
+
+    private Integer budget;
+
+    private String destination;
+
+    private Integer numberOfPeople;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }

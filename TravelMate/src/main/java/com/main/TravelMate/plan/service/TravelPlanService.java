@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,11 +27,16 @@ public class TravelPlanService {
 
         TravelPlan plan = TravelPlan.builder()
                 .user(user)
+                .title(request.getTitle())
                 .location(request.getLocation())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .description(request.getDescription())
                 .interests(request.getInterests())
+                .destination(request.getDestination())
+                .numberOfPeople(request.getNumberOfPeople())
+                .budget(request.getBudget())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         planRepository.save(plan);
@@ -49,6 +55,10 @@ public class TravelPlanService {
                         plan.getEndDate(),
                         plan.getDescription(),
                         plan.getInterests(),
+                        plan.getTitle(),
+                        plan.getBudget(),
+                        plan.getDestination(),
+                        plan.getNumberOfPeople(),
                         plan.getCreatedAt()
                 ))
                 .collect(Collectors.toList());

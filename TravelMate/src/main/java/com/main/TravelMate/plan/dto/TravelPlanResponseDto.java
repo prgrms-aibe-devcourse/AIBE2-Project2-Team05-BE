@@ -15,5 +15,9 @@ public class TravelPlanResponseDto {
     private LocalDate endDate;
     private String description;
     private String interests;
+    private String title;
+    private Integer budget;
+    private String destination;
+    private Integer numberOfPeople;
     private LocalDateTime createdAt;
 }

@@ -11,4 +11,8 @@ public class TravelPlanCreateRequestDto {
     private LocalDate endDate;
     private String description;
     private String interests;
+    private String title;
+    private Integer budget;
+    private String destination;
+    private Integer numberOfPeople;
 }
