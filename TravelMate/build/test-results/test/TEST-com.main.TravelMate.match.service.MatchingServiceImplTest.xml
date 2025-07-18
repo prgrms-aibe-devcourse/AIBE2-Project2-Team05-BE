@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.main.TravelMate.match.service.MatchingServiceImplTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2025-07-18T07:40:14.004Z" hostname="KALI" time="1.449">
+  <properties/>
+  <testcase name="매칭 요청 전송 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="1.092"/>
+  <testcase name="매칭 통계 조회 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.028"/>
+  <testcase name="받은 매칭 요청 조회 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.195"/>
+  <testcase name="매칭 요청 응답 - 거절" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.02"/>
+  <testcase name="자기 자신에게 매칭 요청 - 예외 발생" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.015"/>
+  <testcase name="호환 가능한 여행자 검색 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.031"/>
+  <testcase name="보낸 매칭 요청 조회 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.013"/>
+  <testcase name="활성 매칭 조회 - 성공" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.007"/>
+  <testcase name="매칭 요청 응답 - 수락" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.016"/>
+  <testcase name="중복 매칭 요청 - 예외 발생" classname="com.main.TravelMate.match.service.MatchingServiceImplTest" time="0.01"/>
+  <system-out><![CDATA[2025-07-18T16:40:14.876+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 2, 여행계획: 1
+2025-07-18T16:40:14.890+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 완료 - 매칭 ID: 1
+2025-07-18T16:40:15.108+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 통계 조회 시작
+2025-07-18T16:40:15.286+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 받은 매칭 요청 조회 - 사용자: 2
+2025-07-18T16:40:15.346+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 시작 - 요청 ID: 1, 사용자: 2, 수락: false
+2025-07-18T16:40:15.351+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 완료 - 매칭 ID: 1, 상태: PENDING
+2025-07-18T16:40:15.362+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 1, 여행계획: 1
+2025-07-18T16:40:15.388+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 호환 가능한 여행자 검색 시작 - 사용자: 1, 목적지: 서울
+2025-07-18T16:40:15.392+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 호환 가능한 여행자 검색 완료 - 결과 수: 1
+2025-07-18T16:40:15.410+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 보낸 매칭 요청 조회 - 사용자: 1
+2025-07-18T16:40:15.423+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 활성 매칭 조회 - 사용자: 1
+2025-07-18T16:40:15.439+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 시작 - 요청 ID: 1, 사용자: 2, 수락: true
+2025-07-18T16:40:15.440+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 완료 - 매칭 ID: 1, 상태: PENDING
+2025-07-18T16:40:15.451+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 2, 여행계획: 1
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - MatchingServiceImplTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>MatchingServiceImplTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/com.main.TravelMate.match.service.html">com.main.TravelMate.match.service</a> &gt; MatchingServiceImplTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">10</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">0</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">1.427s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success" id="successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a href="#">Tests</a>
+</li>
+<li>
+<a href="#">Standard output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Method name</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="success">활성 매칭 조회 - 성공</td>
+<td class="success">getActiveMatches_Success()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">매칭 통계 조회 - 성공</td>
+<td class="success">getMatchingStatistics_Success()</td>
+<td class="success">0.028s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">받은 매칭 요청 조회 - 성공</td>
+<td class="success">getReceivedRequests_Success()</td>
+<td class="success">0.195s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">보낸 매칭 요청 조회 - 성공</td>
+<td class="success">getSentRequests_Success()</td>
+<td class="success">0.013s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">매칭 요청 응답 - 수락</td>
+<td class="success">respondToMatchRequest_Accept_Success()</td>
+<td class="success">0.016s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">매칭 요청 응답 - 거절</td>
+<td class="success">respondToMatchRequest_Reject_Success()</td>
+<td class="success">0.020s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">호환 가능한 여행자 검색 - 성공</td>
+<td class="success">searchCompatibleTravelers_Success()</td>
+<td class="success">0.031s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">중복 매칭 요청 - 예외 발생</td>
+<td class="success">sendMatchRequest_DuplicateRequest_ThrowsException()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">자기 자신에게 매칭 요청 - 예외 발생</td>
+<td class="success">sendMatchRequest_SelfRequest_ThrowsException()</td>
+<td class="success">0.015s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">매칭 요청 전송 - 성공</td>
+<td class="success">sendMatchRequest_Success()</td>
+<td class="success">1.092s</td>
+<td class="success">passed</td>
+</tr>
+</table>
+</div>
+<div class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>2025-07-18T16:40:14.876+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 2, 여행계획: 1
+2025-07-18T16:40:14.890+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 완료 - 매칭 ID: 1
+2025-07-18T16:40:15.108+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 통계 조회 시작
+2025-07-18T16:40:15.286+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 받은 매칭 요청 조회 - 사용자: 2
+2025-07-18T16:40:15.346+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 시작 - 요청 ID: 1, 사용자: 2, 수락: false
+2025-07-18T16:40:15.351+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 완료 - 매칭 ID: 1, 상태: PENDING
+2025-07-18T16:40:15.362+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 1, 여행계획: 1
+2025-07-18T16:40:15.388+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 호환 가능한 여행자 검색 시작 - 사용자: 1, 목적지: 서울
+2025-07-18T16:40:15.392+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 호환 가능한 여행자 검색 완료 - 결과 수: 1
+2025-07-18T16:40:15.410+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 보낸 매칭 요청 조회 - 사용자: 1
+2025-07-18T16:40:15.423+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 활성 매칭 조회 - 사용자: 1
+2025-07-18T16:40:15.439+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 시작 - 요청 ID: 1, 사용자: 2, 수락: true
+2025-07-18T16:40:15.440+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 응답 완료 - 매칭 ID: 1, 상태: PENDING
+2025-07-18T16:40:15.451+09:00  INFO 24692 --- [    Test worker] c.m.T.match.service.MatchingServiceImpl  : 매칭 요청 전송 시작 - 요청자: 1, 수신자: 2, 여행계획: 1
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 8.14.3</a> at 2025. 7. 18. 오후 4:40:15</p>
+</div>
+</div>
+</body>
+</html>
