@@ -1,11 +1,14 @@
 package com.main.TravelMate.user.entity;
 
 
+import com.main.TravelMate.feed.entity.TravelFeed;
 import com.main.TravelMate.user.domain.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -32,4 +35,6 @@ public class User {
     private Role role; // USER, GUIDE, ADMIN
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+
 }
