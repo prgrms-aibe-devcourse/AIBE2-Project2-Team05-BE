@@ -1,9 +1,11 @@
 package com.main.TravelMate.chat.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-public class ChatMessageRequest {
+@Getter
+@Setter
+public class ChatMessageDto {
     private Long chatRoomId;
     private String message;
 }

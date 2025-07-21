@@ -15,22 +15,23 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class MatchingRequest {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "sender_id")
     private User sender;
 
     @ManyToOne
+    @JoinColumn(name = "receiver_id")
     private User receiver;
 
     @ManyToOne
+    @JoinColumn(name = "plan_id")
     private TravelPlan plan;
 
     @Enumerated(EnumType.STRING)
-    private MatchingStatus status = MatchingStatus.PENDING; // 기본값
+    private MatchingStatus status;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 }
