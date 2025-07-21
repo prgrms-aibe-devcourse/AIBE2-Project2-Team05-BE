@@ -2,11 +2,11 @@ package com.main.TravelMate.chat.service;
 
 import com.main.TravelMate.chat.domain.ChatMessage;
 import com.main.TravelMate.chat.domain.ChatRoom;
-import com.main.TravelMate.chat.domain.MatchingRequest;
 import com.main.TravelMate.chat.dto.ChatMessageRequestDTO;
 import com.main.TravelMate.chat.dto.ChatMessageResponseDTO;
 import com.main.TravelMate.chat.repository.ChatMessageRepository;
 import com.main.TravelMate.chat.repository.ChatRoomRepository;
+import com.main.TravelMate.matching.entity.MatchingRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +21,14 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
 
-    public ChatRoom createChatRoom(Long matchingId) {
-        ChatRoom room = new ChatRoom();
-        MatchingRequest matching = new MatchingRequest();
-        matching.setId(matchingId);
-        room.setMatchingRequest(matching);
+    // ChatService.java
+    public ChatRoom createChatRoom(MatchingRequest request) {
+        ChatRoom room = ChatRoom.builder()
+                .matchingRequest(request)  // 연관관계 주입
+                .build();
         return chatRoomRepository.save(room);
     }
+
 
     public ChatMessageResponseDTO sendMessage(ChatMessageRequestDTO dto) {
         ChatRoom room = chatRoomRepository.findById(dto.getChatRoomId())
@@ -62,4 +63,3 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 }
-
