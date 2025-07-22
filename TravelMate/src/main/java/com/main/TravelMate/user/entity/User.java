@@ -2,6 +2,7 @@ package com.main.TravelMate.user.entity;
 
 
 import com.main.TravelMate.feed.entity.TravelFeed;
+import com.main.TravelMate.profile.entity.Profile;
 import com.main.TravelMate.user.domain.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,7 +35,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role; // USER, GUIDE, ADMIN
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Profile profile;
+
     private LocalDateTime createdAt = LocalDateTime.now();
+
+
 
 
 }

@@ -24,11 +24,13 @@ public class TravelFeed {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
+    @JoinColumn(name = "travel_plan_id", unique = true)
     private TravelPlan travelPlan;
 
     private String imageUrl;
 
+    @Lob
     private String caption;
 
     @CreationTimestamp

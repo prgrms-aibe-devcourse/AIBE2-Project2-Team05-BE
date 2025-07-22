@@ -1,13 +1,15 @@
 package com.main.TravelMate.plan.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TravelPlanResponseDto {
     private Long id;
     private String location;
@@ -16,7 +18,7 @@ public class TravelPlanResponseDto {
     private String description;
     private String interests;
     private String title;
-    private Integer budget;
+    private long budget;
     private String destination;
     private Integer numberOfPeople;
     private LocalDateTime createdAt;

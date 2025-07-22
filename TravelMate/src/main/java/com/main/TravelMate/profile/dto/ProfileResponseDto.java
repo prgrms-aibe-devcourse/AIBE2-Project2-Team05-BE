@@ -1,25 +1,23 @@
 package com.main.TravelMate.profile.dto;
 
+
+import com.main.TravelMate.feed.dto.TravelFeedResponseDto;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Builder
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class ProfileResponseDto {
     private String nickname;
+    private String bio;
     private String profileImage;
-    private Integer age;
+    private int age;
     private String gender;
-    private String email;
-    private String phoneNumber;
-    private String preferredDestinations;
-    private String preferredTravelStyle;
-    private String interests;
-    private String accommodationType;
-    private String budgetRange;
-    private String aboutMe;
-    private String travelHistory;
-    private String languageSkills;
+    private int followerCount;
+    private int followingCount;
+    private List<TravelFeedResponseDto> feeds;
 }
