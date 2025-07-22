@@ -6,7 +6,6 @@ import com.main.TravelMate.chat.dto.ChatMessageRequestDTO;
 import com.main.TravelMate.chat.dto.ChatMessageResponseDTO;
 import com.main.TravelMate.chat.repository.ChatMessageRepository;
 import com.main.TravelMate.chat.repository.ChatRoomRepository;
-import com.main.TravelMate.matching.entity.MatchingRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,47 +17,48 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
-    // ChatService.java
-    public ChatRoom createChatRoom(MatchingRequest request) {
+    public ChatRoom createRoom(Long matchingId) {
         ChatRoom room = ChatRoom.builder()
-                .matchingRequest(request)  // 연관관계 주입
+                .matchingId(matchingId)
+                .createdAt(LocalDateTime.now())
                 .build();
         return chatRoomRepository.save(room);
     }
 
-
-    public ChatMessageResponseDTO sendMessage(ChatMessageRequestDTO dto) {
-        ChatRoom room = chatRoomRepository.findById(dto.getChatRoomId())
+    public ChatRoom getRoom(Long id) {
+        return chatRoomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("채팅방 없음"));
+    }
 
+    public ChatMessageResponseDTO saveMessage(ChatMessageRequestDTO dto) {
         ChatMessage message = ChatMessage.builder()
-                .chatRoom(room)
+                .chatRoomId(dto.getChatRoomId())
                 .senderId(dto.getSenderId())
                 .message(dto.getMessage())
                 .sentAt(LocalDateTime.now())
                 .build();
 
-        chatMessageRepository.save(message);
+        ChatMessage saved = chatMessageRepository.save(message);
 
         return ChatMessageResponseDTO.builder()
-                .id(message.getId())
-                .senderId(message.getSenderId())
-                .message(message.getMessage())
-                .sentAt(message.getSentAt())
+                .id(saved.getId())
+                .senderId(saved.getSenderId())
+                .message(saved.getMessage())
+                .sentAt(saved.getSentAt())
                 .build();
     }
 
-    public List<ChatMessageResponseDTO> getChatMessages(Long chatRoomId) {
-        return chatMessageRepository.findByChatRoomIdOrderBySentAtAsc(chatRoomId)
+    public List<ChatMessageResponseDTO> getNewMessages(Long chatRoomId, Long lastMessageId) {
+        return chatMessageRepository.findByChatRoomIdAndIdGreaterThanOrderByIdAsc(chatRoomId, lastMessageId)
                 .stream()
-                .map(msg -> ChatMessageResponseDTO.builder()
-                        .id(msg.getId())
-                        .senderId(msg.getSenderId())
-                        .message(msg.getMessage())
-                        .sentAt(msg.getSentAt())
+                .map(m -> ChatMessageResponseDTO.builder()
+                        .id(m.getId())
+                        .senderId(m.getSenderId())
+                        .message(m.getMessage())
+                        .sentAt(m.getSentAt())
                         .build())
                 .collect(Collectors.toList());
     }

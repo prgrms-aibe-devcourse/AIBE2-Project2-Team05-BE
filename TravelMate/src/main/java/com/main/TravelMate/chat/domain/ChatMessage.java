@@ -6,8 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -17,14 +16,9 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_room_id")
-    private ChatRoom chatRoom;
-
+    private Long chatRoomId;
     private Long senderId;
-
-    @Column(columnDefinition = "TEXT")
     private String message;
 
-    private LocalDateTime sentAt = LocalDateTime.now();
+    private LocalDateTime sentAt;
 }

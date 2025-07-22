@@ -19,16 +19,18 @@ public class ChatController {
 
     @PostMapping("/room")
     public ResponseEntity<ChatRoom> createRoom(@RequestParam Long matchingId) {
-        return ResponseEntity.ok(chatService.createChatRoom(matchingId));
+        return ResponseEntity.ok(chatService.createRoom(matchingId));
     }
 
     @PostMapping("/message")
     public ResponseEntity<ChatMessageResponseDTO> sendMessage(@RequestBody ChatMessageRequestDTO dto) {
-        return ResponseEntity.ok(chatService.sendMessage(dto));
+        return ResponseEntity.ok(chatService.saveMessage(dto));
     }
 
     @GetMapping("/room/{chatRoomId}/messages")
-    public ResponseEntity<List<ChatMessageResponseDTO>> getMessages(@PathVariable Long chatRoomId) {
-        return ResponseEntity.ok(chatService.getChatMessages(chatRoomId));
+    public ResponseEntity<List<ChatMessageResponseDTO>> getNewMessages(
+            @PathVariable Long chatRoomId,
+            @RequestParam(defaultValue = "0") Long lastMessageId) {
+        return ResponseEntity.ok(chatService.getNewMessages(chatRoomId, lastMessageId));
     }
 }
