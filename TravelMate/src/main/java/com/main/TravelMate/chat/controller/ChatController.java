@@ -32,4 +32,3 @@ public class ChatController {
         return ResponseEntity.ok(chatService.getChatMessages(chatRoomId));
     }
 }
-
