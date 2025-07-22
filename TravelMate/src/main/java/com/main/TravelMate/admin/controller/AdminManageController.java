@@ -5,10 +5,16 @@ import com.main.TravelMate.admin.dto.ManageMatchingRequest;
 import com.main.TravelMate.admin.dto.ManageReportRequest;
 import com.main.TravelMate.admin.dto.ManageUserRequest;
 import com.main.TravelMate.admin.service.AdminManageService;
+import com.main.TravelMate.feed.dto.AdminFeedDto;
+import com.main.TravelMate.feed.entity.TravelFeed;
+import com.main.TravelMate.report.entity.Report;
+import com.main.TravelMate.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/manage")
@@ -43,5 +49,25 @@ public class AdminManageController {
                                                @RequestBody ManageReportRequest request) {
         adminManageService.manageReport(adminEmail, request);
         return ResponseEntity.ok("신고 처리 완료");
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(adminManageService.getAllUsers());
+    }
+
+    @GetMapping("/feeds")
+    public ResponseEntity<List<AdminFeedDto>> getAllFeeds() {
+        return ResponseEntity.ok(adminManageService.getAllFeeds());
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<Report>> getAllReports() {
+        return ResponseEntity.ok(adminManageService.getAllReports());
+    }
+
+    @GetMapping("/reports/{reportId}")
+    public ResponseEntity<Report> getReportDetail(@PathVariable Long reportId) {
+        return ResponseEntity.ok(adminManageService.getReportDetail(reportId));
     }
 }

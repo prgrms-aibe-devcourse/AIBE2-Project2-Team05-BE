@@ -6,6 +6,8 @@ import com.main.TravelMate.admin.dto.ManageReportRequest;
 import com.main.TravelMate.admin.dto.ManageUserRequest;
 import com.main.TravelMate.admin.entity.*;
 import com.main.TravelMate.admin.repository.*;
+import com.main.TravelMate.feed.dto.AdminFeedDto;
+import com.main.TravelMate.feed.dto.TravelFeedResponseDto;
 import com.main.TravelMate.feed.entity.TravelFeed;
 import com.main.TravelMate.feed.repository.TravelFeedRepository;
 import com.main.TravelMate.matching.entity.MatchingRequest;
@@ -14,11 +16,13 @@ import com.main.TravelMate.report.entity.Report;
 import com.main.TravelMate.report.repository.ReportRepository;
 import com.main.TravelMate.user.repository.UserRepository;
 import com.main.TravelMate.user.entity.User;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -146,5 +150,24 @@ public class AdminManageService {
                 .actionDetails("조치: " + request.getActionTaken())
                 .createdAt(LocalDateTime.now())
                 .build());
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll(); // 사용자 전체 조회
+    }
+
+    public List<AdminFeedDto> getAllFeeds() {
+        return travelFeedRepository.findAll().stream()
+                .map(AdminFeedDto::new)
+                .toList();
+    }
+
+    public List<Report> getAllReports() {
+        return reportRepository.findAll();
+    }
+
+    public Report getReportDetail(Long reportId) {
+        return reportRepository.findById(reportId)
+                .orElseThrow(() -> new EntityNotFoundException("신고를 찾을 수 없습니다."));
     }
 }
