@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/chat")
 @RequiredArgsConstructor
+@RequestMapping("/api/chat")
 public class ChatController {
 
-    private final ChatService chatService;
+    private final ChatMessageService chatMessageService;
+    private final ChatRoomService chatRoomService;
 
     @PostMapping("/room")
     public ResponseEntity<ChatRoom> createRoom(@RequestParam Long matchingId) {

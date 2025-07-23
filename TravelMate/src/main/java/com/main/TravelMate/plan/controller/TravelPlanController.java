@@ -7,6 +7,7 @@ import com.main.TravelMate.plan.service.TravelPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +21,7 @@ public class TravelPlanController {
 
     @PostMapping
     public ResponseEntity<String> createPlan(@RequestBody TravelPlanCreateRequestDto request,
-                                             Authentication authentication) {
-        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+                                             @AuthenticationPrincipal CustomUserDetails user) {
         planService.createPlan(user.getUsername(), request);
         return ResponseEntity.ok("여행 계획 등록 완료");
     }

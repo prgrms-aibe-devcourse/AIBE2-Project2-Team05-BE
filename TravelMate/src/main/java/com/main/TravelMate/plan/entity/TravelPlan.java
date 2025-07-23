@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -37,11 +38,36 @@ public class TravelPlan {
     private String interests;
 
 
-    private Integer budget;
+    private long budget;
 
     private String destination;
 
     private Integer numberOfPeople;
+
+    @OneToMany(mappedBy = "travelPlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TravelDay> days;
+
+
+    @Column(length = 50)
+    private String preferredGender;
+
+    @Column(length = 50)
+    private String preferredAgeRange;
+
+    @Column(length = 50)
+    private String preferredLanguage;
+
+    @Column(columnDefinition = "TEXT")
+    private String matchingNote;
+
+    @Column(columnDefinition = "TEXT")
+    private String accommodationInfo;
+
+    @Column(columnDefinition = "TEXT")
+    private String transportationInfo;
+
+    @Column(columnDefinition = "TEXT")
+    private String extraMemo;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }

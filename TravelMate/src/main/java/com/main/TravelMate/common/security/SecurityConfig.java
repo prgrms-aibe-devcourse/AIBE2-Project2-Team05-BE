@@ -26,13 +26,16 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/auth/oauth/**").permitAll()  // ✅ 추가
+                        .requestMatchers("/api/admin/login", "/api/admin/signup").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/auth/oauth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "GUIDE", "ADMIN")
                         .requestMatchers("/api/plan/**").authenticated()
                         .requestMatchers("/api/feed/**").authenticated()
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/match/**").authenticated()
-                        .requestMatchers("/api/user/**").hasAnyRole("USER", "GUIDE", "ADMIN")
+                        .requestMatchers("/api/report/**").authenticated()
+                        .requestMatchers("/api/profile/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

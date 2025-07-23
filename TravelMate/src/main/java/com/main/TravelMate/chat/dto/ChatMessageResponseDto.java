@@ -1,17 +1,15 @@
 package com.main.TravelMate.chat.dto;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class ChatMessageResponseDTO {
+public class ChatMessageResponseDto {
     private Long id;
-    private Long senderId;
+    private String senderNickname;
     private String message;
     private LocalDateTime sentAt;
 }

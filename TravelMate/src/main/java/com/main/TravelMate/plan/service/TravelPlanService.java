@@ -1,9 +1,16 @@
 package com.main.TravelMate.plan.service;
 
+import com.main.TravelMate.feed.service.TravelFeedService;
+import com.main.TravelMate.plan.dto.TravelDayDto;
 import com.main.TravelMate.plan.dto.TravelPlanCreateRequestDto;
 import com.main.TravelMate.plan.dto.TravelPlanResponseDto;
+import com.main.TravelMate.plan.dto.TravelScheduleDto;
+import com.main.TravelMate.plan.entity.TravelDay;
 import com.main.TravelMate.plan.entity.TravelPlan;
+import com.main.TravelMate.plan.entity.TravelSchedule;
+import com.main.TravelMate.plan.repository.TravelDayRepository;
 import com.main.TravelMate.plan.repository.TravelPlanRepository;
+import com.main.TravelMate.plan.repository.TravelScheduleRepository;
 import com.main.TravelMate.user.entity.User;
 import com.main.TravelMate.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +21,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class TravelPlanService {
 
-    private final TravelPlanRepository planRepository;
+    private final TravelPlanRepository travelPlanRepository;
     private final UserRepository userRepository;
+    private final TravelDayRepository travelDayRepository;
+    private final TravelScheduleRepository travelScheduleRepository;
+    private final TravelFeedService travelFeedService;
 
     public void createPlan(String email, TravelPlanCreateRequestDto request) {
         User user = userRepository.findByEmail(email)
@@ -33,34 +43,66 @@ public class TravelPlanService {
                 .endDate(request.getEndDate())
                 .description(request.getDescription())
                 .interests(request.getInterests())
-                .destination(request.getDestination())
                 .numberOfPeople(request.getNumberOfPeople())
                 .budget(request.getBudget())
                 .createdAt(LocalDateTime.now())
+                .preferredGender(request.getPreferredGender())
+                .preferredAgeRange(request.getPreferredAgeRange())
+                .preferredLanguage(request.getPreferredLanguage())
+                .matchingNote(request.getMatchingNote())
+                .accommodationInfo(request.getAccommodationInfo())
+                .transportationInfo(request.getTransportationInfo())
+                .extraMemo(request.getExtraMemo())
                 .build();
 
-        planRepository.save(plan);
+        TravelPlan savedPlan = travelPlanRepository.save(plan);
+
+        // ✅ Day, Schedule 저장
+        for (TravelDayDto dayDto : request.getDays()) {
+            TravelDay day = TravelDay.builder()
+                    .travelPlan(savedPlan)
+                    .dayNumber(dayDto.getDayNumber())
+                    .date(dayDto.getDate())
+                    .build();
+
+            TravelDay savedDay = travelDayRepository.save(day);
+
+            for (TravelScheduleDto scheduleDto : dayDto.getSchedules()) {
+                TravelSchedule schedule = TravelSchedule.builder()
+                        .travelDay(savedDay)
+                        .time(scheduleDto.getTime())
+                        .place(scheduleDto.getPlace())
+                        .activity(scheduleDto.getActivity())
+                        .memo(scheduleDto.getMemo())
+                        .cost(scheduleDto.getCost())
+                        .build();
+
+                travelScheduleRepository.save(schedule);
+            }
+        }
+
+        // ✅ 피드 자동 생성
+        travelFeedService.createFeedFromPlan(savedPlan);
     }
 
     public List<TravelPlanResponseDto> getUserPlans(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("유저 없음"));
 
-        return planRepository.findByUserId(user.getId())
-                .stream()
-                .map(plan -> new TravelPlanResponseDto(
-                        plan.getId(),
-                        plan.getLocation(),
-                        plan.getStartDate(),
-                        plan.getEndDate(),
-                        plan.getDescription(),
-                        plan.getInterests(),
-                        plan.getTitle(),
-                        plan.getBudget(),
-                        plan.getDestination(),
-                        plan.getNumberOfPeople(),
-                        plan.getCreatedAt()
-                ))
-                .collect(Collectors.toList());
+        List<TravelPlan> plans = travelPlanRepository.findByUser(user);
+
+        return plans.stream()
+                .map(plan -> TravelPlanResponseDto.builder()
+                        .id(plan.getId())
+                        .title(plan.getTitle())
+                        .location(plan.getLocation())
+                        .startDate(plan.getStartDate())
+                        .endDate(plan.getEndDate())
+                        .budget(plan.getBudget())
+                        .numberOfPeople(plan.getNumberOfPeople())
+                        .interests(plan.getInterests())
+                        .description(plan.getDescription())
+                        .build())
+                .toList();
     }
 }
