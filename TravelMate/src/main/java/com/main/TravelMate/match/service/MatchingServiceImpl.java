@@ -1,5 +1,7 @@
 package com.main.TravelMate.match.service;
 
+import com.main.TravelMate.alarm.domain.Alarm;
+import com.main.TravelMate.alarm.service.AlarmService;
 import com.main.TravelMate.match.domain.MatchingStatus;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
 import com.main.TravelMate.match.dto.MatchRequestDto;
@@ -25,6 +27,7 @@ public class MatchingServiceImpl implements MatchingService {
     private final UserRepository userRepository;
     private final TravelPlanRepository travelPlanRepository;
     private final MatchingRepository matchingRepository;
+    private final AlarmService alarmService;
 
     @Override
     public List<MatchRecommendationDto> getRecommendations(Long userId) {
@@ -127,9 +130,18 @@ public class MatchingServiceImpl implements MatchingService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return matchingRepository.save(matching).getId();
-    }
+        matchingRepository.save(matching);
 
+        // 🔔 알림 전송 (receiver에게)
+        alarmService.sendAlarm(
+                receiver.getId(),
+                sender.getNickname(),
+                Alarm.AlarmType.MATCH_REQUEST,
+                sender.getNickname() + " 님이 매칭 요청을 보냈습니다."
+        );
+
+        return matching.getId();
+    }
 
     @Override
     public void respondToRequest(Long matchId, MatchingStatus status) {
@@ -141,5 +153,34 @@ public class MatchingServiceImpl implements MatchingService {
         }
 
         match.updateStatus(status);
+
+        if (status == MatchingStatus.ACCEPTED) {
+            // 🔔 알림 전송 (sender에게)
+            alarmService.sendAlarm(
+                    match.getSender().getId(),
+                    match.getReceiver().getNickname(),
+                    Alarm.AlarmType.MATCH_REQUEST,
+                    match.getReceiver().getNickname() + " 님이 매칭을 수락했습니다. 채팅을 시작해보세요!"
+            );
+
+            // 💡 여기서 채팅방 생성도 같이 하면 좋음
+        }
+    }
+
+
+    @Override
+    public void cancelRequest(Long matchId, Long senderId) {
+        Matching match = matchingRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("매칭 없음"));
+
+        if (!match.getSender().getId().equals(senderId)) {
+            throw new IllegalStateException("본인이 보낸 요청만 취소할 수 있습니다.");
+        }
+
+        if (match.getStatus() != MatchingStatus.PENDING) {
+            throw new IllegalStateException("이미 처리된 매칭은 취소할 수 없습니다.");
+        }
+
+        matchingRepository.delete(match);
     }
 }

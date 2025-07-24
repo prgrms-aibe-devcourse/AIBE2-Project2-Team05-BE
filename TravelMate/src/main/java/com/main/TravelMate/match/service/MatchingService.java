@@ -10,4 +10,5 @@ public interface MatchingService {
     List<MatchRecommendationDto> getRecommendations(Long userId);
     Long sendRequest(Long senderId, MatchRequestDto request);
     void respondToRequest(Long matchId, MatchingStatus status);
+    void cancelRequest(Long matchId, Long senderId);
 }
