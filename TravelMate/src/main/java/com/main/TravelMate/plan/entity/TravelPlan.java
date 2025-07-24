@@ -45,6 +45,8 @@ public class TravelPlan {
 
     private Integer numberOfPeople;
 
+    private int currentPeople;
+
     @OneToMany(mappedBy = "travelPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TravelDay> days;
 

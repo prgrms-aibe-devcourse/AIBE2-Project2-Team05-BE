@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/plan/**").authenticated()
                         .requestMatchers("/api/feed/**").authenticated()
                         .requestMatchers("/api/chat/**").authenticated()
+                        .requestMatchers("/api/alarms/**").authenticated()
                         .requestMatchers("/api/match/**").authenticated()
                         .requestMatchers("/api/report/**").authenticated()
                         .requestMatchers("/api/profile/**").authenticated()

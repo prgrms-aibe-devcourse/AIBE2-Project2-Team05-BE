@@ -42,4 +42,14 @@ public class MatchingController {
         matchingService.respondToRequest(requestDto.getMatchId(), requestDto.getStatus());
         return ResponseEntity.ok("매칭 요청에 응답했습니다: " + requestDto.getStatus());
     }
+
+    @DeleteMapping("/cancel/{matchId}")
+    public ResponseEntity<String> cancelRequest(
+            @PathVariable Long matchId,
+            Authentication auth
+    ) {
+        Long senderId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        matchingService.cancelRequest(matchId, senderId);
+        return ResponseEntity.ok("매칭 요청이 취소되었습니다.");
+    }
 }
