@@ -69,5 +69,11 @@ public class TravelPlan {
     @Column(columnDefinition = "TEXT")
     private String extraMemo;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean recruiting = true;
+
+
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }
