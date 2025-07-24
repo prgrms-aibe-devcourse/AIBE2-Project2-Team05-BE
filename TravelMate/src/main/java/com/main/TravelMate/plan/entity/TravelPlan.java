@@ -1,5 +1,6 @@
 package com.main.TravelMate.plan.entity;
 
+import com.main.TravelMate.match.entity.TravelStyle;
 import com.main.TravelMate.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
