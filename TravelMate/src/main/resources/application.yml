@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:mysql://travelmate.cd0m2au6cgqt.ap-southeast-2.rds.amazonaws.com/travelmate
+    username: admin
+    password: teamsomac123!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+jwt:
+  secret: ZJHdk45nvEJGwrj3MneJND8rhgiF39vNSjRUGOWUdn4=
+  expiration: 3600000 # 1시간
