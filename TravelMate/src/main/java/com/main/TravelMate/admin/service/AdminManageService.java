@@ -1,5 +1,6 @@
 package com.main.TravelMate.admin.service;
 
+import com.main.TravelMate.admin.domain.MatchingManageStatus;
 import com.main.TravelMate.admin.dto.ManageFeedRequest;
 import com.main.TravelMate.admin.dto.ManageMatchingRequest;
 import com.main.TravelMate.admin.dto.ManageReportRequest;
@@ -7,11 +8,10 @@ import com.main.TravelMate.admin.dto.ManageUserRequest;
 import com.main.TravelMate.admin.entity.*;
 import com.main.TravelMate.admin.repository.*;
 import com.main.TravelMate.feed.dto.AdminFeedDto;
-import com.main.TravelMate.feed.dto.TravelFeedResponseDto;
 import com.main.TravelMate.feed.entity.TravelFeed;
 import com.main.TravelMate.feed.repository.TravelFeedRepository;
-import com.main.TravelMate.matching.entity.MatchingRequest;
-import com.main.TravelMate.matching.repository.MatchingRequestRepository;
+import com.main.TravelMate.match.entity.Matching;
+import com.main.TravelMate.match.repository.MatchingRepository;
 import com.main.TravelMate.report.entity.Report;
 import com.main.TravelMate.report.repository.ReportRepository;
 import com.main.TravelMate.user.repository.UserRepository;
@@ -32,7 +32,7 @@ public class AdminManageService {
     private final AdminRepository adminRepository;
     private final ManagedUserRepository managedUserRepository;
     private final AdminActionLogRepository adminActionLogRepository;
-    private final MatchingRequestRepository matchingRequestRepository;
+    private final MatchingRepository matchingRepository;
     private final ManagedMatchingRequestRepository managedMatchingRequestRepository;
     private final TravelFeedRepository travelFeedRepository;
     private final ManagedTravelFeedRepository managedTravelFeedRepository;
@@ -69,31 +69,22 @@ public class AdminManageService {
 
 
     @Transactional
-    public void manageMatchingRequest(String adminEmail, ManageMatchingRequest request) {
-        Admin admin = adminRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new IllegalArgumentException("관리자 정보 없음"));
+    public void manageMatchingRequest(Long adminId, ManageMatchingRequest dto) {
+        Matching matching = matchingRepository.findById(dto.getMatchId())
+                .orElseThrow(() -> new RuntimeException("매칭 없음"));
 
-        MatchingRequest matching = matchingRequestRepository.findById(request.getMatchingId())
-                .orElseThrow(() -> new IllegalArgumentException("매칭 요청 없음"));
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("관리자 없음"));
 
-        ManagedMatchingRequest managed = managedMatchingRequestRepository.findByMatchingId(matching.getId())
-                .orElse(new ManagedMatchingRequest());
-
-        managed.setMatching(matching);
-        managed.setAdmin(admin);
-        managed.setStatus(request.getStatus());
-        managed.setNotes(request.getNotes());
-        managed.setUpdatedAt(LocalDateTime.now());
-        managedMatchingRequestRepository.save(managed);
-
-        adminActionLogRepository.save(AdminActionLog.builder()
+        ManagedMatchingRequest managed = ManagedMatchingRequest.builder()
+                .matching(matching)
                 .admin(admin)
-                .actionType("MATCHING_" + request.getStatus())
-                .targetEntityType("matching_request")
-                .targetEntityId(matching.getId())
-                .actionDetails(request.getNotes())
-                .createdAt(LocalDateTime.now())
-                .build());
+                .status(MatchingManageStatus.valueOf(dto.getStatus()))
+                .notes(dto.getNotes())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        managedMatchingRequestRepository.save(managed);
     }
 
 

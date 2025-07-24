@@ -1,4 +1,4 @@
-package com.main.TravelMate.matching.domain;
+package com.main.TravelMate.match.domain;
 
 public enum MatchingStatus {
     PENDING, ACCEPTED, REJECTED

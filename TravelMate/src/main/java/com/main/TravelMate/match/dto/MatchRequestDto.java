@@ -1,9 +1,9 @@
-package com.main.TravelMate.matching.dto;
+package com.main.TravelMate.match.dto;
 
 import lombok.Getter;
 
 @Getter
-public class MatchingRequestDto {
+public class MatchRequestDto {
     private Long receiverId;
     private Long planId;
 }
