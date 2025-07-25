@@ -286,7 +286,6 @@ public class MatchingServiceImpl implements MatchingService {
             throw new IllegalStateException("수락된 매칭만 취소할 수 있습니다.");
         }
 
-        // 본인만 취소 가능하도록 체크
         if (!match.getSender().getId().equals(userId) && !match.getReceiver().getId().equals(userId)) {
             throw new IllegalStateException("본인만 취소할 수 있습니다.");
         }
@@ -296,18 +295,25 @@ public class MatchingServiceImpl implements MatchingService {
         TravelPlan receiverPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(match.getReceiver().getId())
                 .orElseThrow();
 
-        // 수락 당시 반영되었던 인원 복구
         receiverPlan.setCurrentPeople(receiverPlan.getCurrentPeople() - senderPlan.getCurrentPeople());
-
-        // 다시 모집 중 상태로 되돌림
         senderPlan.setRecruiting(true);
         if (receiverPlan.getCurrentPeople() < receiverPlan.getNumberOfPeople()) {
             receiverPlan.setRecruiting(true);
         }
 
-        // 매칭 삭제 또는 상태 변경 (여기선 삭제 방식 사용)
-        matchingRepository.delete(match);
+        // 🔔 알림 추가
+        Long opponentId = match.getSender().getId().equals(userId)
+                ? match.getReceiver().getId()
+                : match.getSender().getId();
+        User cancelUser = userRepository.findById(userId).orElseThrow();
+        alarmService.sendAlarm(
+                opponentId,
+                cancelUser.getNickname(),
+                Alarm.AlarmType.MATCH_REQUEST,
+                cancelUser.getNickname() + " 님이 매칭 수락을 취소했습니다."
+        );
 
+        matchingRepository.delete(match);
         travelPlanRepository.save(senderPlan);
         travelPlanRepository.save(receiverPlan);
     }
