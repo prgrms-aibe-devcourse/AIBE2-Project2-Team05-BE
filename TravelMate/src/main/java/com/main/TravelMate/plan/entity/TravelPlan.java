@@ -46,6 +46,7 @@ public class TravelPlan {
 
     private int currentPeople;
 
+
     @OneToMany(mappedBy = "travelPlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TravelDay> days;
 
@@ -74,6 +75,9 @@ public class TravelPlan {
     @Builder.Default
     @Column(nullable = false)
     private boolean recruiting = true;
+
+    @Column(columnDefinition = "TEXT")  // 또는 VARCHAR(1000) 등으로 맞춰줘도 됨
+    private String styles;
 
 
 

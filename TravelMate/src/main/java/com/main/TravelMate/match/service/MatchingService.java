@@ -12,4 +12,5 @@ public interface MatchingService {
     void respondToRequest(Long matchId, MatchingStatus status);
     void cancelRequest(Long matchId, Long senderId);
     void rejectPlan(Long senderId, Long planId);
+    void cancelAcceptedMatch(Long matchId, Long userId);
 }

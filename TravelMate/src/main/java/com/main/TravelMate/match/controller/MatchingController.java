@@ -55,9 +55,22 @@ public class MatchingController {
 
     @PostMapping("/reject")
     public ResponseEntity<Void> rejectPlan(
-            @RequestParam Long senderId,
-            @RequestParam Long planId) {
-        matchingService.rejectPlan(senderId, planId);
+            @RequestBody MatchRequestDto request,
+            Authentication auth
+    ) {
+        Long senderId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        matchingService.rejectPlan(senderId, request.getPlanId());
         return ResponseEntity.ok().build();
+    }
+
+
+    @DeleteMapping("/cancel/accepted/{matchId}")
+    public ResponseEntity<String> cancelAcceptedMatch(
+            @PathVariable Long matchId,
+            Authentication auth
+    ) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        matchingService.cancelAcceptedMatch(matchId, userId);
+        return ResponseEntity.ok("수락된 매칭이 취소되었습니다.");
     }
 }

@@ -1,5 +1,7 @@
 package com.main.TravelMate.match.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.TravelMate.alarm.domain.Alarm;
 import com.main.TravelMate.alarm.service.AlarmService;
 import com.main.TravelMate.match.domain.MatchingStatus;
@@ -35,7 +37,6 @@ public class MatchingServiceImpl implements MatchingService {
         TravelPlan myPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(userId)
                 .orElseThrow(() -> new RuntimeException("플랜 없음"));
 
-        // ❗ 내가 이미 거절하거나 요청한 플랜 제외
         List<Long> excludedPlanIds = matchingRepository.findAllBySenderId(userId).stream()
                 .map(m -> m.getPlan().getId())
                 .toList();
@@ -44,67 +45,87 @@ public class MatchingServiceImpl implements MatchingService {
                 .findRecruitingPlansExcludingUser(userId)
                 .stream()
                 .filter(p -> !excludedPlanIds.contains(p.getId()))
+                .filter(p -> p.getCurrentPeople() + myPlan.getCurrentPeople() <= p.getNumberOfPeople())
                 .toList();
 
         return candidates.stream()
-                .map(p -> new MatchRecommendationDto(
-                        p.getUser().getId(),
-                        p.getUser().getNickname(),
-                        p.getLocation(),
-                        p.getStartDate(),
-                        p.getEndDate(),
-                        p.getId(),
-                        0
-                ))
+                .map(p -> {
+                    int score = calculateCompatibilityScore(myPlan, p);
+                    if (score >= 60) {
+                        return new MatchRecommendationDto(
+                                p.getUser().getId(),
+                                p.getUser().getNickname(),
+                                p.getLocation(),
+                                p.getStartDate(),
+                                p.getEndDate(),
+                                p.getId(),
+                                score
+                        );
+                    } else {
+                        return null; // 점수 낮으면 추천 제외
+                    }
+                })
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(MatchRecommendationDto::getCompatibilityScore).reversed()) // 높은 점수 우선
                 .toList();
-    /* 🔒 유사도 기반 추천 로직 - 일시 비활성화
-    return candidates.stream()
-            .filter(p -> p.getLocation().equalsIgnoreCase(myPlan.getLocation()))
-            .map(p -> {
-                int score = calculateCompatibilityScore(myProfile, myPlan, p);
-                if (score >= 60) {
-                    return new MatchRecommendationDto(
-                            p.getUser().getId(),
-                            p.getUser().getNickname(),
-                            p.getUser().getProfile().getProfileImage(),
-                            p.getUser().getProfile().getTravelStyle(),
-                            p.getLocation(),
-                            p.getStartDate(),
-                            p.getEndDate(),
-                            p.getId(),
-                            score
-                    );
-                }
-                return null;
-            })
-            .filter(Objects::nonNull)
-            .sorted(Comparator.comparingInt(MatchRecommendationDto::getCompatibilityScore).reversed())
-            .toList();
-    */
     }
 
     private int calculateCompatibilityScore(TravelPlan myPlan, TravelPlan target) {
         int score = 0;
 
-        // 목적지 매칭 (50점)
+        // ✅ 목적지 유사도
         if (target.getLocation().equalsIgnoreCase(myPlan.getLocation())) {
             score += 50;
+        } else if (isSimilarRegion(myPlan.getLocation(), target.getLocation())) {
+            score += 30;
         }
 
-        // 일정 겹침 (30점)
-        int overlap = calculateOverlappingDays(
-                myPlan.getStartDate(), myPlan.getEndDate(),
+        // ✅ 일정 겹침 비율 (양쪽 기준 평균)
+        int overlap = calculateOverlappingDays(myPlan.getStartDate(), myPlan.getEndDate(),
                 target.getStartDate(), target.getEndDate());
         if (overlap > 0) {
-            long myTotal = ChronoUnit.DAYS.between(myPlan.getStartDate(), myPlan.getEndDate()) + 1;
-            double ratio = (double) overlap / myTotal;
-            score += (int) (ratio * 30);
+            long myDays = ChronoUnit.DAYS.between(myPlan.getStartDate(), myPlan.getEndDate()) + 1;
+            long otherDays = ChronoUnit.DAYS.between(target.getStartDate(), target.getEndDate()) + 1;
+
+            double myRatio = (double) overlap / myDays;
+            double otherRatio = (double) overlap / otherDays;
+            double avgRatio = (myRatio + otherRatio) / 2;
+
+            score += (int) (avgRatio * 25); // 최대 25점
         }
 
-        // 그룹 크기 (20점)
-        int diff = Math.abs(myPlan.getNumberOfPeople() - target.getNumberOfPeople());
-        if (diff == 0) score += 20;
-        else if (diff <= 2) score += 10;
+        // ✅ 여행 일수 차이 (±2 이내면 10점, 이후 점점 감점)
+        long myDays = ChronoUnit.DAYS.between(myPlan.getStartDate(), myPlan.getEndDate()) + 1;
+        long otherDays = ChronoUnit.DAYS.between(target.getStartDate(), target.getEndDate()) + 1;
+        long diffDays = Math.abs(myDays - otherDays);
+        if (diffDays <= 2) {
+            score += 10;
+        } else if (diffDays <= 4) {
+            score += 5;
+        }
+
+        // ✅ 모집 인원수 유사도
+        int diffPeople = Math.abs(myPlan.getNumberOfPeople() - target.getNumberOfPeople());
+        if (diffPeople == 0) score += 15;
+        else if (diffPeople == 1) score += 10;
+        else if (diffPeople == 2) score += 5;
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            List<String> myStyles = mapper.readValue(myPlan.getStyles(), new TypeReference<>() {});
+            List<String> targetStyles = mapper.readValue(target.getStyles(), new TypeReference<>() {});
+
+            long common = myStyles.stream()
+                    .filter(targetStyles::contains)
+                    .count();
+
+            if (common > 0) {
+                score += Math.min(common * 5, 15); // 1개: 5점, 2개: 10점, 3개 이상: 15점
+            }
+        } catch (Exception e) {
+            System.out.println("styles 점수 계산 실패: " + e.getMessage());
+        }
 
         return Math.min(score, 100);
     }
@@ -113,6 +134,21 @@ public class MatchingServiceImpl implements MatchingService {
         LocalDate overlapEnd = aEnd.isBefore(bEnd) ? aEnd : bEnd;
         if (overlapStart.isAfter(overlapEnd)) return 0;
         return (int) ChronoUnit.DAYS.between(overlapStart, overlapEnd) + 1;
+    }
+
+
+    private boolean isSimilarRegion(String loc1, String loc2) {
+        Map<String, String> regionMap = Map.ofEntries(
+                Map.entry("서울", "수도권"), Map.entry("경기", "수도권"), Map.entry("인천", "수도권"),
+                Map.entry("부산", "영남"), Map.entry("대구", "영남"), Map.entry("경남", "영남"),
+                Map.entry("광주", "호남"), Map.entry("전북", "호남"), Map.entry("전남", "호남")
+                // 필요시 더 추가
+        );
+
+        String r1 = regionMap.getOrDefault(loc1, loc1);
+        String r2 = regionMap.getOrDefault(loc2, loc2);
+
+        return r1.equals(r2);
     }
 
 
@@ -197,6 +233,7 @@ public class MatchingServiceImpl implements MatchingService {
 
             // 💬 채팅방 생성 등 추가 로직 가능
         }
+
     }
 
 
@@ -239,4 +276,40 @@ public class MatchingServiceImpl implements MatchingService {
 
         matchingRepository.save(reject);
     }
+
+    @Override
+    public void cancelAcceptedMatch(Long matchId, Long userId) {
+        Matching match = matchingRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("매칭 없음"));
+
+        if (match.getStatus() != MatchingStatus.ACCEPTED) {
+            throw new IllegalStateException("수락된 매칭만 취소할 수 있습니다.");
+        }
+
+        // 본인만 취소 가능하도록 체크
+        if (!match.getSender().getId().equals(userId) && !match.getReceiver().getId().equals(userId)) {
+            throw new IllegalStateException("본인만 취소할 수 있습니다.");
+        }
+
+        TravelPlan senderPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(match.getSender().getId())
+                .orElseThrow();
+        TravelPlan receiverPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(match.getReceiver().getId())
+                .orElseThrow();
+
+        // 수락 당시 반영되었던 인원 복구
+        receiverPlan.setCurrentPeople(receiverPlan.getCurrentPeople() - senderPlan.getCurrentPeople());
+
+        // 다시 모집 중 상태로 되돌림
+        senderPlan.setRecruiting(true);
+        if (receiverPlan.getCurrentPeople() < receiverPlan.getNumberOfPeople()) {
+            receiverPlan.setRecruiting(true);
+        }
+
+        // 매칭 삭제 또는 상태 변경 (여기선 삭제 방식 사용)
+        matchingRepository.delete(match);
+
+        travelPlanRepository.save(senderPlan);
+        travelPlanRepository.save(receiverPlan);
+    }
+
 }
