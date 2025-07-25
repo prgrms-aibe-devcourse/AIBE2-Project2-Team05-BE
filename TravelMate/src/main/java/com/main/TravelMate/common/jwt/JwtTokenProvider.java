@@ -1,8 +1,14 @@
 package com.main.TravelMate.common.jwt;
 
 
+import com.main.TravelMate.admin.entity.Admin;
+import com.main.TravelMate.admin.repository.AdminRepository;
+import com.main.TravelMate.common.security.CustomAdminDetails;
+import com.main.TravelMate.common.security.CustomUserDetails;
 import com.main.TravelMate.common.security.UserDetailsServiceImpl;
 import com.main.TravelMate.user.domain.Role;
+import com.main.TravelMate.user.entity.User;
+import com.main.TravelMate.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,14 +17,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
+    private final AdminRepository adminRepository;
+    private final UserRepository userRepository;
+
+
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -42,11 +54,32 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS256, secretKey.getBytes())
                 .compact();
     }
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(secretKey.getBytes())
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
 
     public Authentication getAuthentication(String token) {
-        String email = getEmail(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+        Claims claims = getClaims(token);  // ✅ 여기만 수정!
+        String email = claims.getSubject();
+        String role = (String) claims.get("role");
+
+        if ("ADMIN".equals(role)) {
+            Admin admin = adminRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("관리자 없음"));
+            CustomAdminDetails adminDetails = new CustomAdminDetails(admin);
+            return new UsernamePasswordAuthenticationToken(
+                    adminDetails, null, adminDetails.getAuthorities());
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("유저 없음"));
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        return new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
     }
 
     public String getEmail(String token) {
@@ -59,9 +92,22 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(token);
+            Claims claims = Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(token).getBody();
+            
+            // 디버깅 로그 추가
+            String email = claims.getSubject();
+            Date expiration = claims.getExpiration();
+            
+            System.out.println("🔍 JWT 토큰 검증 중:");
+            System.out.println("  - 사용자: " + email);
+            System.out.println("  - 만료시간: " + expiration);
+            System.out.println("  - 현재시간: " + new Date());
+            System.out.println("  - 만료여부: " + (expiration.before(new Date()) ? "만료됨" : "유효함"));
+            
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            System.err.println("❌ JWT 토큰 검증 실패: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
