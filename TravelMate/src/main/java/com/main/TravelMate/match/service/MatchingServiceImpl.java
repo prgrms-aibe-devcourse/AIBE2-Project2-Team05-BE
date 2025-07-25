@@ -32,13 +32,20 @@ public class MatchingServiceImpl implements MatchingService {
     @Override
     public List<MatchRecommendationDto> getRecommendations(Long userId) {
         User me = userRepository.findById(userId).orElseThrow();
-        Profile myProfile = me.getProfile();
         TravelPlan myPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(userId)
                 .orElseThrow(() -> new RuntimeException("플랜 없음"));
 
-        List<TravelPlan> candidates = travelPlanRepository.findRecruitingPlansExcludingUser(userId);
+        // ❗ 내가 이미 거절하거나 요청한 플랜 제외
+        List<Long> excludedPlanIds = matchingRepository.findAllBySenderId(userId).stream()
+                .map(m -> m.getPlan().getId())
+                .toList();
 
-        // 🔽 현재는 유사도 점수 무시하고 recruiting=true면 모두 반환
+        List<TravelPlan> candidates = travelPlanRepository
+                .findRecruitingPlansExcludingUser(userId)
+                .stream()
+                .filter(p -> !excludedPlanIds.contains(p.getId()))
+                .toList();
+
         return candidates.stream()
                 .map(p -> new MatchRecommendationDto(
                         p.getUser().getId(),
@@ -50,7 +57,6 @@ public class MatchingServiceImpl implements MatchingService {
                         0
                 ))
                 .toList();
-
     /* 🔒 유사도 기반 추천 로직 - 일시 비활성화
     return candidates.stream()
             .filter(p -> p.getLocation().equalsIgnoreCase(myPlan.getLocation()))
@@ -155,7 +161,7 @@ public class MatchingServiceImpl implements MatchingService {
         match.updateStatus(status);
 
         if (status == MatchingStatus.ACCEPTED) {
-            // 🔔 알림 전송 (sender에게)
+            // 알림 전송
             alarmService.sendAlarm(
                     match.getSender().getId(),
                     match.getReceiver().getNickname(),
@@ -163,7 +169,33 @@ public class MatchingServiceImpl implements MatchingService {
                     match.getReceiver().getNickname() + " 님이 매칭을 수락했습니다. 채팅을 시작해보세요!"
             );
 
-            // 💡 여기서 채팅방 생성도 같이 하면 좋음
+            User sender = match.getSender();
+            User receiver = match.getReceiver();
+
+            TravelPlan senderPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(sender.getId())
+                    .orElse(null);
+            TravelPlan receiverPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(receiver.getId())
+                    .orElse(null);
+
+            if (senderPlan != null && receiverPlan != null) {
+
+                // 1. senderPlan 모집 종료 (매칭 요청했으므로 더 이상 안 받음)
+                senderPlan.setRecruiting(false);
+
+                // 2. receiverPlan의 현재 인원 += senderPlan의 현재 인원
+                int updatedReceiverPeople = receiverPlan.getCurrentPeople() + senderPlan.getCurrentPeople();
+                receiverPlan.setCurrentPeople(updatedReceiverPeople);
+
+                // 3. receiverPlan도 마감되었는지 확인
+                if (updatedReceiverPeople >= receiverPlan.getNumberOfPeople()) {
+                    receiverPlan.setRecruiting(false);
+                }
+
+                travelPlanRepository.save(senderPlan);
+                travelPlanRepository.save(receiverPlan);
+            }
+
+            // 💬 채팅방 생성 등 추가 로직 가능
         }
     }
 
@@ -182,5 +214,29 @@ public class MatchingServiceImpl implements MatchingService {
         }
 
         matchingRepository.delete(match);
+    }
+
+
+
+    @Override
+    public void rejectPlan(Long senderId, Long planId) {
+        TravelPlan plan = travelPlanRepository.findById(planId).orElseThrow();
+        User sender = userRepository.findById(senderId).orElseThrow();
+        User receiver = plan.getUser();
+
+        // 이미 거절한 이력이 있으면 중복 저장 안 하게 처리
+        boolean alreadyExists = matchingRepository
+                .existsBySenderIdAndReceiverIdAndPlanId(senderId, receiver.getId(), planId);
+        if (alreadyExists) return;
+
+        Matching reject = Matching.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .plan(plan)
+                .status(MatchingStatus.REJECTED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        matchingRepository.save(reject);
     }
 }

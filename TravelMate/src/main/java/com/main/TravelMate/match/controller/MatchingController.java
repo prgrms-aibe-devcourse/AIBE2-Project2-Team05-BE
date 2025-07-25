@@ -52,4 +52,12 @@ public class MatchingController {
         matchingService.cancelRequest(matchId, senderId);
         return ResponseEntity.ok("매칭 요청이 취소되었습니다.");
     }
+
+    @PostMapping("/reject")
+    public ResponseEntity<Void> rejectPlan(
+            @RequestParam Long senderId,
+            @RequestParam Long planId) {
+        matchingService.rejectPlan(senderId, planId);
+        return ResponseEntity.ok().build();
+    }
 }

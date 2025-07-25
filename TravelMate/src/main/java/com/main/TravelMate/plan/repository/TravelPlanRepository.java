@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface TravelPlanRepository extends JpaRepository<TravelPlan, Long> {
     List<TravelPlan> findByUserId(Long userId);
     List<TravelPlan> findByUser(User user);
-    @Query("SELECT p FROM TravelPlan p WHERE p.user.id != :userId")
+    @Query("SELECT p FROM TravelPlan p WHERE p.user.id != :userId AND p.recruiting = true")
     List<TravelPlan> findRecruitingPlansExcludingUser(@Param("userId") Long userId);
     Optional<TravelPlan> findFirstByUserIdOrderByStartDateDesc(Long userId);
 }
