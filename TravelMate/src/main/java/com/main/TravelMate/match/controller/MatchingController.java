@@ -53,7 +53,7 @@ public class MatchingController {
         return ResponseEntity.ok("매칭 요청이 취소되었습니다.");
     }
 
-    @PostMapping("/reject")
+    @PostMapping("/reject") // 매칭 리스트에서 X 버튼 누를시
     public ResponseEntity<Void> rejectPlan(
             @RequestBody MatchRequestDto request,
             Authentication auth

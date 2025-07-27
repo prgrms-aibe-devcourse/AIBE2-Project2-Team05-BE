@@ -14,6 +14,8 @@ import java.util.List;
 public class TravelFeedResponseDto {
 
     private Long travelPlanId; // ✅ 이거 추가
+    
+    private String planId; // ✅ 실제 planId 추가
 
     private String title;
     private String location;
@@ -28,7 +30,9 @@ public class TravelFeedResponseDto {
 
     private String imageUrl;
     private String caption;
+    private String status; // ✅ 피드 상태 추가
 
     private String createdBy;         // ✅ 이거 추가
     private String profileImage;      // ✅ 프로필용 이미지
+    private String authorName;        // ✅ 여행 계획 작성자 이름 (여행리더 구분용)
 }

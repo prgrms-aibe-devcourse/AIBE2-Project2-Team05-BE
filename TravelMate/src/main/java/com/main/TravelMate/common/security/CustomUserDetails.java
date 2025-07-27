@@ -28,6 +28,7 @@ public class CustomUserDetails implements UserDetails {
         return this.user.getId();  // user는 내부 User 객체라고 가정
     }
 
+
     @Override public String getPassword() { return user.getPassword(); }
     @Override public String getUsername() { return user.getEmail(); }
     @Override public boolean isAccountNonExpired() { return true; }

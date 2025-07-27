@@ -1,36 +1,37 @@
 package com.main.TravelMate.admin.entity;
 
-import com.main.TravelMate.admin.domain.MatchingManageStatus;
-import com.main.TravelMate.match.entity.Matching;
+// 임시 비활성화 - 매칭 기능 개발 중
+/*
+import com.main.TravelMate.matching.entity.MatchingRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "managed_matching_request")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 public class ManagedMatchingRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "matching_id", unique = true)
-    private Matching matching;
+    private MatchingRequest matching;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
+    @JoinColumn(name = "admin_id")
     private Admin admin;
 
-    @Enumerated(EnumType.STRING)
-    private MatchingManageStatus status; // APPROVED, REJECTED_BY_ADMIN, UNDER_REVIEW
+    @Column(nullable = false)
+    private String status; // APPROVED, REJECTED_BY_ADMIN, UNDER_REVIEW
 
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     private LocalDateTime updatedAt;
 }
+*/

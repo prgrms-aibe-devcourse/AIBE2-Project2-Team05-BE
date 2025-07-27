@@ -16,17 +16,21 @@ import com.main.TravelMate.profile.repository.FollowRepository;
 import com.main.TravelMate.profile.repository.ProfileRepository;
 import com.main.TravelMate.user.entity.User;
 import com.main.TravelMate.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileService {
 
     private final UserRepository userRepository;
@@ -35,13 +39,52 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
 
     public ProfileResponseDto getProfile(Long userId) {
+        log.info("👤 프로필 조회 시작 - 사용자 ID: {}", userId);
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        
+        return buildProfileResponse(user);
+    }
 
-        List<TravelFeed> feeds = travelFeedRepository.findByUser(user);
+    /**
+     * 닉네임으로 프로필 조회
+     */
+    public ProfileResponseDto getProfileByNickname(String nickname) {
+        log.info("👤 닉네임으로 프로필 조회 시작 - 닉네임: {}", nickname);
+        
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + nickname));
+        
+        return buildProfileResponse(user);
+    }
+
+    /**
+     * 공통 프로필 응답 생성 메서드
+     */
+    private ProfileResponseDto buildProfileResponse(User user) {
+        log.info("✅ 사용자 정보 조회 완료 - 이메일: {}, 닉네임: {}", user.getEmail(), user.getNickname());
+
+        // ✅ ACTIVE 상태 피드만 조회 (숨김 처리된 피드 제외)
+        List<TravelFeed> feeds = travelFeedRepository.findByUserAndStatusOrderByCreatedAtDesc(user, "ACTIVE");
+        int feedCount = travelFeedRepository.countByUser(user);
+        log.info("📋 사용자 피드 조회 완료 - 조회된 피드 수: {}, 전체 피드 수: {}", feeds.size(), feedCount);
+        
+        // 각 피드 정보 출력
+        for (int i = 0; i < feeds.size(); i++) {
+            TravelFeed feed = feeds.get(i);
+            log.info("  📄 피드 {} - ID: {}, 여행 제목: '{}', 캡션: '{}'", 
+                    i + 1, feed.getId(), 
+                    feed.getTravelPlan() != null ? feed.getTravelPlan().getTitle() : "null",
+                    feed.getCaption() != null ? feed.getCaption().substring(0, Math.min(50, feed.getCaption().length())) + "..." : "null");
+        }
 
         List<TravelFeedResponseDto> feedDtos = feeds.stream().map(feed -> {
             var plan = feed.getTravelPlan();
+            
+            // 🔍 이미지 URL 디버깅 로그 추가
+            log.info("📷 피드 ID: {}, TravelPlan 이미지 URL: {}", 
+                    feed.getId(), plan.getImageUrl());
 
             List<TravelDayDto> dayDtos = plan.getDays().stream().map(day -> {
                 List<TravelScheduleDto> scheduleDtos = day.getSchedules().stream().map(schedule ->
@@ -63,6 +106,7 @@ public class ProfileService {
 
             return TravelFeedResponseDto.builder()
                     .travelPlanId(plan.getId())
+                    .planId(plan.getId().toString()) // ✅ 단순한 ID 사용
                     .title(plan.getTitle())
                     .location(plan.getLocation())
                     .description(plan.getDescription())
@@ -72,21 +116,41 @@ public class ProfileService {
                     .startDate(plan.getStartDate())
                     .endDate(plan.getEndDate())
                     .days(dayDtos)
-                    .imageUrl(feed.getImageUrl())
+                    .imageUrl(plan.getImageUrl()) // ✅ TravelPlan의 image_url 사용
                     .caption(feed.getCaption())
+                    .authorName(plan.getAuthorName()) // ✅ 여행 계획 작성자 이름 추가
                     .build();
         }).toList();
 
-        return ProfileResponseDto.builder()
+        // 팔로워/팔로잉 수 계산
+        int followerCount = followRepository.countByFollowing(user);
+        int followingCount = followRepository.countByFollower(user);
+        
+        // 피드 수 = 게시물 수
+        int postsCount = feeds.size();
+        
+        // TODO: 실제 여행 계획 생성/참여 수 계산 로직 추가 필요
+        int createdTripsCount = 0; // 추후 TravelPlan 테이블에서 계산
+        int joinedTripsCount = 0;  // 추후 매칭/참여 테이블에서 계산
+
+        ProfileResponseDto response = ProfileResponseDto.builder()
+                .id(user.getId())
                 .nickname(user.getNickname())
-                .bio(user.getProfile().getBio())
-                .profileImage(user.getProfile().getProfileImage())
-                .age(user.getProfile().getAge())
-                .gender(user.getProfile().getGender())
-                .followerCount(followRepository.countByFollowing(user))
-                .followingCount(followRepository.countByFollower(user))
+                .email(user.getEmail())
+                .bio(user.getProfile() != null ? user.getProfile().getBio() : "자기소개를 입력해주세요.")
+                .profileImage(user.getProfile() != null ? user.getProfile().getProfileImage() : null)
+                .age(user.getProfile() != null ? user.getProfile().getAge() : 0)
+                .gender(user.getProfile() != null ? user.getProfile().getGender() : "비공개")
+                .followerCount(followerCount)
+                .followingCount(followingCount)
+                .postsCount(postsCount)
+                .createdTripsCount(createdTripsCount)
+                .joinedTripsCount(joinedTripsCount)
                 .feeds(feedDtos)
                 .build();
+        
+        log.info("🎯 프로필 응답 생성 완료 - 사용자: {}, 총 피드 수: {}", user.getEmail(), feedDtos.size());
+        return response;
     }
 
     public void follow(Long currentUserId, Long targetId) {
@@ -117,6 +181,13 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        // 🔄 User 엔티티의 nickname 업데이트
+        if (request.getNickname() != null && !request.getNickname().trim().isEmpty()) {
+            log.info("👤 닉네임 업데이트: {} -> {}", user.getNickname(), request.getNickname());
+            user.setNickname(request.getNickname().trim());
+            userRepository.save(user); // User 엔티티 저장
+        }
+
         Profile profile = profileRepository.findByUser(user)
                 .orElse(Profile.builder().user(user).build()); // 없으면 새로 생성
 
@@ -130,5 +201,24 @@ public class ProfileService {
 
         profileRepository.save(profile);
         user.setProfile(profile); // 양방향 연관관계 유지
+        
+        log.info("✅ 프로필 업데이트 완료 - 사용자: {}, 닉네임: {}", user.getEmail(), user.getNickname());
+    }
+
+    /**
+     * 테스트용: 모든 사용자 목록 조회 (개발용)
+     */
+    public List<Object> getAllUsersForTest() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(user -> {
+                    Map<String, Object> userInfo = new HashMap<>();
+                    userInfo.put("id", user.getId());
+                    userInfo.put("email", user.getEmail());
+                    userInfo.put("nickname", user.getNickname());
+                    userInfo.put("role", user.getRole());
+                    return userInfo;
+                })
+                .collect(Collectors.toList());
     }
 }

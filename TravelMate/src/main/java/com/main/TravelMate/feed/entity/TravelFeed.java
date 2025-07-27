@@ -28,10 +28,16 @@ public class TravelFeed {
     @JoinColumn(name = "travel_plan_id", unique = true)
     private TravelPlan travelPlan;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     @Lob
     private String caption;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private String status = "ACTIVE"; // ACTIVE, DEACTIVE
 
     @CreationTimestamp
     @Column(updatable = false)

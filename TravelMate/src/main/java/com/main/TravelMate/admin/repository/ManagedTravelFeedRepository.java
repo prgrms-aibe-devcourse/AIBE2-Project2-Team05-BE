@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface ManagedTravelFeedRepository extends JpaRepository<ManagedTravelFeed, Long> {
-    Optional<ManagedTravelFeed> findByTravelFeedId(Long travelFeedId);
+    Optional<ManagedTravelFeed> findByTravelFeed_Id(Long travelFeedId);
 }
