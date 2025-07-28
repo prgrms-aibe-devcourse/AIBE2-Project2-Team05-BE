@@ -15,22 +15,36 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatController {
 
+//    private final ChatService chatService;
+//
+//    @PostMapping("/room")
+//    public ResponseEntity<ChatRoom> createRoom(@RequestParam Long matchingId) {
+//        return ResponseEntity.ok(chatService.createRoom(matchingId));
+//    }
+//
+//    @PostMapping("/message")
+//    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@RequestBody ChatMessageRequestDTO dto) {
+//        return ResponseEntity.ok(chatService.saveMessage(dto));
+//    }
+//
+//    @GetMapping("/room/{chatRoomId}/messages")
+//    public ResponseEntity<List<ChatMessageResponseDTO>> getNewMessages(
+//            @PathVariable Long chatRoomId,
+//            @RequestParam(defaultValue = "0") Long lastMessageId) {
+//        return ResponseEntity.ok(chatService.getNewMessages(chatRoomId, lastMessageId));
+//    }
     private final ChatService chatService;
 
-    @PostMapping("/room")
-    public ResponseEntity<ChatRoom> createRoom(@RequestParam Long matchingId) {
-        return ResponseEntity.ok(chatService.createRoom(matchingId));
-    }
-
     @PostMapping("/message")
-    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@RequestBody ChatMessageRequestDTO dto) {
-        return ResponseEntity.ok(chatService.saveMessage(dto));
+    public ResponseEntity<ChatMessageResponseDTO> sendMessage(@RequestBody ChatMessageRequestDTO request) {
+        // senderId, roomId 강제 설정
+        request.setSenderId(1L);
+        request.setChatRoomId(100L);
+        return ResponseEntity.ok(chatService.saveMessage(request));
     }
 
-    @GetMapping("/room/{chatRoomId}/messages")
-    public ResponseEntity<List<ChatMessageResponseDTO>> getNewMessages(
-            @PathVariable Long chatRoomId,
-            @RequestParam(defaultValue = "0") Long lastMessageId) {
-        return ResponseEntity.ok(chatService.getNewMessages(chatRoomId, lastMessageId));
+    @GetMapping("/rooms/{roomId}/messages")
+    public ResponseEntity<List<ChatMessageResponseDTO>> getMessages(@PathVariable Long roomId) {
+        return ResponseEntity.ok(chatService.getMessages(roomId));
     }
 }
