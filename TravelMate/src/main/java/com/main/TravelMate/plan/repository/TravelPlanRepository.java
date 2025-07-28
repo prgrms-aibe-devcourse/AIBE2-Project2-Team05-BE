@@ -36,12 +36,17 @@ public interface TravelPlanRepository extends JpaRepository<TravelPlan, Long> {
             Pageable pageable
     );
     // 내 플랜 최신 1개
-Optional<TravelPlan> findFirstByUserIdOrderByStartDateDesc(Long userId);
+    Optional<TravelPlan> findFirstByUserIdOrderByStartDateDesc(Long userId);
 
-// 매칭 대상 필터링 (recruiting && matchingEnabled)
-@Query("SELECT p FROM TravelPlan p " +
+     // 매칭 대상 필터링 (recruiting && matchingEnabled)
+    @Query("SELECT p FROM TravelPlan p " +
        "WHERE p.user.id != :userId " +
        "AND p.recruiting = true " +
        "AND p.matchingEnabled = true")
-List<TravelPlan> findRecruitingPlansExcludingUser(@Param("userId") Long userId);
+    List<TravelPlan> findRecruitingPlansExcludingUser(@Param("userId") Long userId);
+
+    @Query("SELECT p FROM TravelPlan p " +
+            "JOIN TravelFeed f ON f.travelPlan.id = p.id " +
+            "WHERE f.travelStatus = 'RECRUITING'")
+    List<TravelPlan> findRecruitingPlans();
 }

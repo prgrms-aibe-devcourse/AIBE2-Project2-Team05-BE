@@ -1,6 +1,7 @@
 package com.main.TravelMate.match.service;
 
 import com.main.TravelMate.match.domain.MatchingStatus;
+import com.main.TravelMate.match.dto.MatchFilterRequestDto;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
 import com.main.TravelMate.match.dto.MatchRequestDto;
 import com.main.TravelMate.match.dto.MatchResponseDto;
@@ -18,4 +19,5 @@ public interface MatchingService {
     List<MatchResponseDto> getMyAcceptedMatches(Long userId);
     List<MatchResponseDto> getMySentRequests(Long userId);
     void updateTravelStatus(Long userId, Long travelPlanId, String status);
+    List<MatchRecommendationDto> filterRecommendations(MatchFilterRequestDto filter);
 }

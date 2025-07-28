@@ -10,4 +10,8 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     List<Matching> findByReceiverIdAndStatus(Long receiverId, MatchingStatus status);
     boolean existsBySenderIdAndReceiverIdAndPlanId(Long senderId, Long receiverId, Long planId);
     List<Matching> findAllBySenderId(Long senderId);
+    List<Matching> findBySenderIdAndStatusIn(Long senderId, List<MatchingStatus> statuses);
+
+    boolean existsBySenderIdAndReceiverIdAndPlanIdAndStatus(
+            Long senderId, Long receiverId, Long planId, MatchingStatus status);
 }

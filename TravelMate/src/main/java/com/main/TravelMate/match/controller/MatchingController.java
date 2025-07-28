@@ -2,10 +2,7 @@ package com.main.TravelMate.match.controller;
 
 import com.main.TravelMate.common.security.CustomUserDetails;
 import com.main.TravelMate.match.domain.MatchingStatus;
-import com.main.TravelMate.match.dto.MatchRecommendationDto;
-import com.main.TravelMate.match.dto.MatchRequestDto;
-import com.main.TravelMate.match.dto.MatchResponseDto;
-import com.main.TravelMate.match.dto.TravelStatusUpdateRequestDto;
+import com.main.TravelMate.match.dto.*;
 import com.main.TravelMate.match.service.MatchingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +24,16 @@ public class MatchingController {
         return ResponseEntity.ok(matchingService.getRecommendations(userId));
     }
 
+    @PostMapping("/recommendations/filter")
+    public ResponseEntity<List<MatchRecommendationDto>> filterRecommendations(
+            @RequestBody MatchFilterRequestDto filter,
+            Authentication auth
+    ) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        filter.setUserId(userId);
+        List<MatchRecommendationDto> filtered = matchingService.filterRecommendations(filter);
+        return ResponseEntity.ok(filtered);
+    }
     @PostMapping("/request")
     public ResponseEntity<MatchResponseDto> sendRequest(
             @RequestBody MatchRequestDto request,

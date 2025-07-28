@@ -8,6 +8,7 @@ import com.main.TravelMate.feed.domain.TravelStatus;
 import com.main.TravelMate.feed.entity.TravelFeed;
 import com.main.TravelMate.feed.repository.TravelFeedRepository;
 import com.main.TravelMate.match.domain.MatchingStatus;
+import com.main.TravelMate.match.dto.MatchFilterRequestDto;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
 import com.main.TravelMate.match.dto.MatchRequestDto;
 import com.main.TravelMate.match.dto.MatchResponseDto;
@@ -43,7 +44,13 @@ public class MatchingServiceImpl implements MatchingService {
         TravelPlan myPlan = travelPlanRepository.findFirstByUserIdOrderByStartDateDesc(userId)
                 .orElseThrow(() -> new RuntimeException("플랜 없음"));
 
-        List<Long> excludedPlanIds = matchingRepository.findAllBySenderId(userId).stream()
+        List<Long> excludedPlanIds = matchingRepository
+                .findBySenderIdAndStatusIn(userId, List.of(
+                        MatchingStatus.PENDING,
+                        MatchingStatus.ACCEPTED,
+                        MatchingStatus.REJECTED
+                ))
+                .stream()
                 .map(m -> m.getPlan().getId())
                 .toList();
 
@@ -89,12 +96,9 @@ public class MatchingServiceImpl implements MatchingService {
         System.out.println("👉 대상 플랜 ID: " + target.getId() + ", 유저: " + target.getUser().getNickname());
 
         // 목적지
-        if (target.getLocation().equalsIgnoreCase(myPlan.getLocation())) {
-            score += 50;
-            System.out.println("✅ 목적지 일치 +50");
-        } else if (isSimilarRegion(myPlan.getLocation(), target.getLocation())) {
-            score += 30;
-            System.out.println("✅ 지역 유사 +30");
+        if (isSameDestination(myPlan.getLocation(), target.getLocation())) {
+            score += 35;
+            System.out.println("✅ 목적지 비슷 +35");
         }
 
         // 일정 겹침
@@ -108,7 +112,7 @@ public class MatchingServiceImpl implements MatchingService {
             double otherRatio = (double) overlap / otherDays;
             double avgRatio = (myRatio + otherRatio) / 2;
 
-            int overlapScore = (int) (avgRatio * 25);
+            int overlapScore = (int) (avgRatio * 35);
             score += overlapScore;
             System.out.println("✅ 일정 겹침 + " + overlapScore);
         }
@@ -118,24 +122,18 @@ public class MatchingServiceImpl implements MatchingService {
         long otherDays = ChronoUnit.DAYS.between(target.getStartDate(), target.getEndDate()) + 1;
         long diffDays = Math.abs(myDays - otherDays);
         if (diffDays <= 2) {
-            score += 10;
-            System.out.println("✅ 일수차이 ±2일 이내 +10");
+            score += 15;
+            System.out.println("✅ 일수차이 ±2일 이내 +15");
         } else if (diffDays <= 4) {
-            score += 5;
-            System.out.println("✅ 일수차이 ±4일 이내 +5");
+            score += 8;
+            System.out.println("✅ 일수차이 ±4일 이내 +8");
         }
 
         // 인원수
-        int diffPeople = Math.abs(myPlan.getNumberOfPeople() - target.getNumberOfPeople());
-        if (diffPeople == 0) {
+        int combinedPeople = myPlan.getCurrentPeople() + target.getCurrentPeople();
+        if (combinedPeople <= target.getNumberOfPeople()) {
             score += 15;
-            System.out.println("✅ 인원수 일치 +15");
-        } else if (diffPeople == 1) {
-            score += 10;
-            System.out.println("✅ 인원수 ±1 +10");
-        } else if (diffPeople == 2) {
-            score += 5;
-            System.out.println("✅ 인원수 ±2 +5");
+            System.out.println("✅ 인원수 조건 만족 (정원 이하) +15");
         }
 
         // 스타일
@@ -145,7 +143,7 @@ public class MatchingServiceImpl implements MatchingService {
             List<String> targetStyles = mapper.readValue(target.getStyles(), new TypeReference<>() {});
             long common = myStyles.stream().filter(targetStyles::contains).count();
             if (common > 0) {
-                int styleScore = (int) Math.min(common * 5, 15);
+                int styleScore = (int) Math.min(common * 5, 10);
                 score += styleScore;
                 System.out.println("✅ 스타일 공통 " + common + "개 + " + styleScore);
             }
@@ -158,6 +156,8 @@ public class MatchingServiceImpl implements MatchingService {
 
         return Math.min(score, 100);
     }
+
+
     private int calculateOverlappingDays(LocalDate aStart, LocalDate aEnd, LocalDate bStart, LocalDate bEnd) {
         LocalDate overlapStart = aStart.isAfter(bStart) ? aStart : bStart;
         LocalDate overlapEnd = aEnd.isBefore(bEnd) ? aEnd : bEnd;
@@ -166,18 +166,107 @@ public class MatchingServiceImpl implements MatchingService {
     }
 
 
-    private boolean isSimilarRegion(String loc1, String loc2) {
-        Map<String, String> regionMap = Map.ofEntries(
-                Map.entry("서울", "수도권"), Map.entry("경기", "수도권"), Map.entry("인천", "수도권"),
-                Map.entry("부산", "영남"), Map.entry("대구", "영남"), Map.entry("경남", "영남"),
-                Map.entry("광주", "호남"), Map.entry("전북", "호남"), Map.entry("전남", "호남")
-                // 필요시 더 추가
+    private boolean isSameDestination(String myLocation, String targetLocation) {
+        Map<String, String> destinationMap = Map.ofEntries(
+                // 서울
+                Map.entry("서울", "서울"),
+                Map.entry("강남", "서울"),
+                Map.entry("홍대", "서울"),
+                Map.entry("이태원", "서울"),
+                Map.entry("종로", "서울"),
+                Map.entry("잠실", "서울"),
+                Map.entry("명동", "서울"),
+                Map.entry("한강", "서울"),
+                Map.entry("건대", "서울"),
+                Map.entry("성수", "서울"),
+                Map.entry("북촌", "서울"),
+                Map.entry("남산", "서울"),
+                Map.entry("광화문", "서울"),
+                Map.entry("여의도", "서울"),
+
+                // 부산
+                Map.entry("부산", "부산"),
+                Map.entry("해운대", "부산"),
+                Map.entry("광안리", "부산"),
+                Map.entry("남포동", "부산"),
+                Map.entry("서면", "부산"),
+                Map.entry("태종대", "부산"),
+                Map.entry("송정", "부산"),
+                Map.entry("감천문화마을", "부산"),
+                Map.entry("광복로", "부산"),
+                Map.entry("부산역", "부산"),
+
+                // 대구
+                Map.entry("대구", "대구"),
+                Map.entry("동성로", "대구"),
+                Map.entry("앞산", "대구"),
+                Map.entry("서문시장", "대구"),
+                Map.entry("수성못", "대구"),
+                Map.entry("이월드", "대구"),
+                Map.entry("팔공산", "대구"),
+
+                // 제주도
+                Map.entry("제주도", "제주도"),
+                Map.entry("제주시", "제주도"),
+                Map.entry("서귀포", "제주도"),
+                Map.entry("성산", "제주도"),
+                Map.entry("함덕", "제주도"),
+                Map.entry("협재", "제주도"),
+                Map.entry("우도", "제주도"),
+                Map.entry("한라산", "제주도"),
+
+                // 인천
+                Map.entry("인천", "인천"),
+                Map.entry("송도", "인천"),
+                Map.entry("을왕리", "인천"),
+                Map.entry("월미도", "인천"),
+                Map.entry("차이나타운", "인천"),
+                Map.entry("영종도", "인천"),
+
+                // 강원도
+                Map.entry("강원도", "강원도"),
+                Map.entry("강릉", "강원도"),
+                Map.entry("속초", "강원도"),
+                Map.entry("양양", "강원도"),
+                Map.entry("춘천", "강원도"),
+                Map.entry("평창", "강원도"),
+                Map.entry("홍천", "강원도"),
+                Map.entry("정선", "강원도"),
+
+                // 경기도
+                Map.entry("경기도", "경기도"),
+                Map.entry("수원", "경기도"),
+                Map.entry("가평", "경기도"),
+                Map.entry("양평", "경기도"),
+                Map.entry("용인", "경기도"),
+                Map.entry("파주", "경기도"),
+                Map.entry("남양주", "경기도"),
+                Map.entry("일산", "경기도"),
+                Map.entry("안산", "경기도"),
+
+                // 전라도
+                Map.entry("전라도", "전라도"),
+                Map.entry("전주", "전라도"),
+                Map.entry("여수", "전라도"),
+                Map.entry("순천", "전라도"),
+                Map.entry("광주", "전라도"),
+                Map.entry("남원", "전라도"),
+                Map.entry("군산", "전라도"),
+
+                // 경상도
+                Map.entry("경상도", "경상도"),
+                Map.entry("경주", "경상도"),
+                Map.entry("포항", "경상도"),
+                Map.entry("통영", "경상도"),
+                Map.entry("창원", "경상도"),
+                Map.entry("울산", "경상도"),
+                Map.entry("하동", "경상도"),
+                Map.entry("남해", "경상도")
         );
 
-        String r1 = regionMap.getOrDefault(loc1, loc1);
-        String r2 = regionMap.getOrDefault(loc2, loc2);
-
-        return r1.equals(r2);
+        String normalizedMy = destinationMap.getOrDefault(myLocation, myLocation);
+        String normalizedTarget = destinationMap.getOrDefault(targetLocation, targetLocation);
+        return normalizedMy.equals(normalizedTarget);
     }
 
 
@@ -412,6 +501,63 @@ public class MatchingServiceImpl implements MatchingService {
                 .collect(Collectors.toList());
     }
 
+
+    @Override
+    public List<MatchRecommendationDto> filterRecommendations(MatchFilterRequestDto filter) {
+        List<TravelPlan> all = travelPlanRepository.findRecruitingPlans(); // 모집중인 플랜만
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        return all.stream()
+                .filter(p -> {
+                    // 🔸 내 플랜 제외
+                    if (filter.getUserId().equals(p.getUser().getId())) {
+                        return false;
+                    }
+
+                    // 🔸 내가 거절한 플랜 제외
+                    boolean rejected = matchingRepository.existsBySenderIdAndReceiverIdAndPlanIdAndStatus(
+                            filter.getUserId(), p.getUser().getId(), p.getId(), MatchingStatus.REJECTED
+                    );
+                    if (rejected) return false;
+
+                    // 🔸 지역 필터
+                    if (filter.getLocation() != null && !p.getLocation().contains(filter.getLocation())) {
+                        return false;
+                    }
+
+                    // 🔸 날짜 필터
+                    if (filter.getStartDate() != null && filter.getEndDate() != null) {
+                        if (p.getStartDate().isAfter(filter.getEndDate()) || p.getEndDate().isBefore(filter.getStartDate())) {
+                            return false;
+                        }
+                    }
+
+                    // 🔸 스타일 필터
+                    if (filter.getStyles() != null && !filter.getStyles().isEmpty()) {
+                        try {
+                            List<String> planStyles = mapper.readValue(p.getStyles(), new TypeReference<>() {});
+                            boolean hasCommon = planStyles.stream().anyMatch(filter.getStyles()::contains);
+                            if (!hasCommon) return false;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+
+                .map(p -> new MatchRecommendationDto(
+                        p.getUser().getId(),
+                        p.getUser().getNickname(),
+                        p.getLocation(),
+                        p.getStartDate(),
+                        p.getEndDate(),
+                        p.getId(),
+                        0 // 유사도 없음
+                ))
+                .toList();
+    }
 
 
 
