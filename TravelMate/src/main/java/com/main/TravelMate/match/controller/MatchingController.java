@@ -5,6 +5,7 @@ import com.main.TravelMate.match.domain.MatchingStatus;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
 import com.main.TravelMate.match.dto.MatchRequestDto;
 import com.main.TravelMate.match.dto.MatchResponseDto;
+import com.main.TravelMate.match.dto.TravelStatusUpdateRequestDto;
 import com.main.TravelMate.match.service.MatchingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -72,5 +73,35 @@ public class MatchingController {
         Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
         matchingService.cancelAcceptedMatch(matchId, userId);
         return ResponseEntity.ok("수락된 매칭이 취소되었습니다.");
+    }
+
+    @PatchMapping("/travel-status")
+    public ResponseEntity<String> updateTravelStatus(
+            @RequestBody TravelStatusUpdateRequestDto request,
+            Authentication auth
+    ) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        matchingService.updateTravelStatus(userId, request.getTravelPlanId(), request.getStatus());
+        return ResponseEntity.ok("여행 상태가 변경되었습니다: " + request.getStatus());
+    }
+
+
+
+    @GetMapping("/my/sent") // 내가 보낸 모든 매칭 요청 조회
+    public ResponseEntity<List<MatchResponseDto>> getSentRequests(Authentication auth) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        return ResponseEntity.ok(matchingService.getMySentRequests(userId));
+    }
+
+    @GetMapping("/my/received") // 내가 받은 PENDING 요청만 조회
+    public ResponseEntity<List<MatchResponseDto>> getReceivedRequests(Authentication auth) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        return ResponseEntity.ok(matchingService.getMyReceivedRequests(userId));
+    }
+
+    @GetMapping("/my/accepted") // 내가 포함된 ACCEPTED 매칭 조회
+    public ResponseEntity<List<MatchResponseDto>> getAcceptedMatches(Authentication auth) {
+        Long userId = ((CustomUserDetails) auth.getPrincipal()).getUserId();
+        return ResponseEntity.ok(matchingService.getMyAcceptedMatches(userId));
     }
 }

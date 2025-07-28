@@ -4,9 +4,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.TravelMate.alarm.domain.Alarm;
 import com.main.TravelMate.alarm.service.AlarmService;
+import com.main.TravelMate.feed.entity.TravelFeed;
+import com.main.TravelMate.feed.entity.TravelStatus;
+import com.main.TravelMate.feed.repository.TravelFeedRepository;
 import com.main.TravelMate.match.domain.MatchingStatus;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
 import com.main.TravelMate.match.dto.MatchRequestDto;
+import com.main.TravelMate.match.dto.MatchResponseDto;
 import com.main.TravelMate.match.entity.Matching;
 import com.main.TravelMate.match.repository.MatchingRepository;
 import com.main.TravelMate.plan.entity.TravelPlan;
@@ -21,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class MatchingServiceImpl implements MatchingService {
     private final TravelPlanRepository travelPlanRepository;
     private final MatchingRepository matchingRepository;
     private final AlarmService alarmService;
+    private final TravelFeedRepository travelFeedRepository;
 
     @Override
     public List<MatchRecommendationDto> getRecommendations(Long userId) {
@@ -40,6 +46,7 @@ public class MatchingServiceImpl implements MatchingService {
         List<Long> excludedPlanIds = matchingRepository.findAllBySenderId(userId).stream()
                 .map(m -> m.getPlan().getId())
                 .toList();
+
 
         List<TravelPlan> candidates = travelPlanRepository
                 .findRecruitingPlansExcludingUser(userId)
@@ -73,14 +80,19 @@ public class MatchingServiceImpl implements MatchingService {
     private int calculateCompatibilityScore(TravelPlan myPlan, TravelPlan target) {
         int score = 0;
 
-        // ✅ 목적지 유사도
+        System.out.println("============== 유사도 계산 시작 ==============");
+        System.out.println("👉 대상 플랜 ID: " + target.getId() + ", 유저: " + target.getUser().getNickname());
+
+        // 목적지
         if (target.getLocation().equalsIgnoreCase(myPlan.getLocation())) {
             score += 50;
+            System.out.println("✅ 목적지 일치 +50");
         } else if (isSimilarRegion(myPlan.getLocation(), target.getLocation())) {
             score += 30;
+            System.out.println("✅ 지역 유사 +30");
         }
 
-        // ✅ 일정 겹침 비율 (양쪽 기준 평균)
+        // 일정 겹침
         int overlap = calculateOverlappingDays(myPlan.getStartDate(), myPlan.getEndDate(),
                 target.getStartDate(), target.getEndDate());
         if (overlap > 0) {
@@ -91,41 +103,53 @@ public class MatchingServiceImpl implements MatchingService {
             double otherRatio = (double) overlap / otherDays;
             double avgRatio = (myRatio + otherRatio) / 2;
 
-            score += (int) (avgRatio * 25); // 최대 25점
+            int overlapScore = (int) (avgRatio * 25);
+            score += overlapScore;
+            System.out.println("✅ 일정 겹침 + " + overlapScore);
         }
 
-        // ✅ 여행 일수 차이 (±2 이내면 10점, 이후 점점 감점)
+        // 여행일수 차이
         long myDays = ChronoUnit.DAYS.between(myPlan.getStartDate(), myPlan.getEndDate()) + 1;
         long otherDays = ChronoUnit.DAYS.between(target.getStartDate(), target.getEndDate()) + 1;
         long diffDays = Math.abs(myDays - otherDays);
         if (diffDays <= 2) {
             score += 10;
+            System.out.println("✅ 일수차이 ±2일 이내 +10");
         } else if (diffDays <= 4) {
             score += 5;
+            System.out.println("✅ 일수차이 ±4일 이내 +5");
         }
 
-        // ✅ 모집 인원수 유사도
+        // 인원수
         int diffPeople = Math.abs(myPlan.getNumberOfPeople() - target.getNumberOfPeople());
-        if (diffPeople == 0) score += 15;
-        else if (diffPeople == 1) score += 10;
-        else if (diffPeople == 2) score += 5;
+        if (diffPeople == 0) {
+            score += 15;
+            System.out.println("✅ 인원수 일치 +15");
+        } else if (diffPeople == 1) {
+            score += 10;
+            System.out.println("✅ 인원수 ±1 +10");
+        } else if (diffPeople == 2) {
+            score += 5;
+            System.out.println("✅ 인원수 ±2 +5");
+        }
 
+        // 스타일
         try {
             ObjectMapper mapper = new ObjectMapper();
-
             List<String> myStyles = mapper.readValue(myPlan.getStyles(), new TypeReference<>() {});
             List<String> targetStyles = mapper.readValue(target.getStyles(), new TypeReference<>() {});
-
-            long common = myStyles.stream()
-                    .filter(targetStyles::contains)
-                    .count();
-
+            long common = myStyles.stream().filter(targetStyles::contains).count();
             if (common > 0) {
-                score += Math.min(common * 5, 15); // 1개: 5점, 2개: 10점, 3개 이상: 15점
+                int styleScore = (int) Math.min(common * 5, 15);
+                score += styleScore;
+                System.out.println("✅ 스타일 공통 " + common + "개 + " + styleScore);
             }
         } catch (Exception e) {
-            System.out.println("styles 점수 계산 실패: " + e.getMessage());
+            System.out.println("⚠️ 스타일 비교 실패: " + e.getMessage());
         }
+
+        System.out.println("➡️ 총 유사도 점수: " + score);
+        System.out.println("==============================================");
 
         return Math.min(score, 100);
     }
@@ -250,6 +274,14 @@ public class MatchingServiceImpl implements MatchingService {
             throw new IllegalStateException("이미 처리된 매칭은 취소할 수 없습니다.");
         }
 
+        // 🔔 알림 추가: 받는 사람에게 알림
+        alarmService.sendAlarm(
+                match.getReceiver().getId(),
+                match.getSender().getNickname(),
+                Alarm.AlarmType.MATCH_REQUEST,
+                match.getSender().getNickname() + " 님이 보낸 매칭 요청이 취소되었습니다."
+        );
+
         matchingRepository.delete(match);
     }
 
@@ -317,5 +349,65 @@ public class MatchingServiceImpl implements MatchingService {
         travelPlanRepository.save(senderPlan);
         travelPlanRepository.save(receiverPlan);
     }
+
+
+    private MatchResponseDto toDto(Matching match) {
+        return new MatchResponseDto(
+                match.getId(),
+                match.getStatus()
+        );
+    }
+
+
+
+    @Override
+    public void updateTravelStatus(Long userId, Long travelPlanId, String status) {
+        TravelPlan plan = travelPlanRepository.findById(travelPlanId)
+                .orElseThrow(() -> new RuntimeException("해당 여행 계획을 찾을 수 없습니다."));
+
+        if (!plan.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("여행 작성자만 여행 상태를 변경할 수 있습니다.");
+        }
+
+        TravelFeed feed = travelFeedRepository.findByTravelPlan_Id(travelPlanId)
+                .orElseThrow(() -> new RuntimeException("해당 여행 계획에 연결된 피드를 찾을 수 없습니다."));
+
+        try {
+            // 입력된 문자열을 대문자로 변환 후 enum으로
+            TravelStatus travelStatus = TravelStatus.valueOf(status.toUpperCase());
+
+            feed.setTravelStatus(travelStatus);
+            travelFeedRepository.save(feed);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 상태입니다. (RECRUITING, TRAVELING, COMPLETED 중 하나여야 합니다)");
+        }
+    }
+
+
+    @Override
+    public List<MatchResponseDto> getMySentRequests(Long userId) {
+        return matchingRepository.findAllBySenderId(userId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MatchResponseDto> getMyReceivedRequests(Long userId) {
+        return matchingRepository.findByReceiverIdAndStatus(userId, MatchingStatus.PENDING).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MatchResponseDto> getMyAcceptedMatches(Long userId) {
+        return matchingRepository.findAll().stream()
+                .filter(m -> m.getStatus() == MatchingStatus.ACCEPTED &&
+                        (m.getSender().getId().equals(userId) || m.getReceiver().getId().equals(userId)))
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+
+
 
 }

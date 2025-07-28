@@ -39,6 +39,10 @@ public class TravelFeed {
     @Builder.Default
     private String status = "ACTIVE"; // ACTIVE, DEACTIVE
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "travel_status")
+    private TravelStatus travelStatus;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
