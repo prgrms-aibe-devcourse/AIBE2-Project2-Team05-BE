@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.TravelMate.alarm.domain.Alarm;
 import com.main.TravelMate.alarm.service.AlarmService;
+import com.main.TravelMate.feed.domain.TravelStatus;
 import com.main.TravelMate.feed.entity.TravelFeed;
-import com.main.TravelMate.feed.entity.TravelStatus;
 import com.main.TravelMate.feed.repository.TravelFeedRepository;
 import com.main.TravelMate.match.domain.MatchingStatus;
 import com.main.TravelMate.match.dto.MatchRecommendationDto;
@@ -53,6 +53,11 @@ public class MatchingServiceImpl implements MatchingService {
                 .stream()
                 .filter(p -> !excludedPlanIds.contains(p.getId()))
                 .filter(p -> p.getCurrentPeople() + myPlan.getCurrentPeople() <= p.getNumberOfPeople())
+                .filter(p -> {
+                    // 🔍 travel_feed.travel_status가 RECRUITING(모집중)인지 확인
+                    Optional<TravelFeed> feedOpt = travelFeedRepository.findByTravelPlan_Id(p.getId());
+                    return feedOpt.isPresent() && feedOpt.get().getTravelStatus() == TravelStatus.RECRUITING;
+                })
                 .toList();
 
         return candidates.stream()

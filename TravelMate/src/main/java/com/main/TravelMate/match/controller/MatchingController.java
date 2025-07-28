@@ -75,7 +75,7 @@ public class MatchingController {
         return ResponseEntity.ok("수락된 매칭이 취소되었습니다.");
     }
 
-    @PatchMapping("/travel-status")
+    @PatchMapping("/travel-status") // 여행 상태 변경
     public ResponseEntity<String> updateTravelStatus(
             @RequestBody TravelStatusUpdateRequestDto request,
             Authentication auth
